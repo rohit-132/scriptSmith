@@ -1,1 +1,3 @@
-# quickfashionv1.2
+# quickfashionv1.5
+
+this is v1.5

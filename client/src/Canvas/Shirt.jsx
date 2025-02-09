@@ -1,4 +1,59 @@
-import React from "react";
+// import React from "react";
+// import { easing } from "maath";
+// import { useSnapshot } from "valtio";
+// import { useFrame } from "@react-three/fiber";
+// import { Decal, useGLTF, useTexture } from "@react-three/drei";
+
+// import state from "../store";
+
+// const Shirt = () => {
+//   const snap = useSnapshot(state);
+//   const { nodes, materials } = useGLTF("/shirt_baked.glb");
+//   const logoTexture = useTexture(snap.logoDecal);
+//   const fullTexture = useTexture(snap.fullDecal);
+
+//   useFrame((state, delta) =>
+//     easing.dampC(materials.lambert1.color, snap.color, 0.25, delta)
+//   );
+
+//   const stateString = JSON.stringify(snap);
+
+//   return (
+//     <group key={stateString}>
+//       <mesh
+//         castShadow
+//         geometry={nodes.T_Shirt_male.geometry}
+//         material={materials.lambert1}
+//         material-roughness={1}
+//         dispose={null}
+//       >
+//         {snap.isFullTexture && (
+//           <Decal
+//             position={[0, 0, 0]}
+//             rotation={[0, 0, 0]}
+//             scale={1}
+//             map={fullTexture}
+//           />
+//         )}
+
+//         {snap.isLogoTexture && (
+//           <Decal
+//             position={[0, 0.04, 0.15]}
+//             rotation={[0, 0, 0]}
+//             scale={0.1}
+//             map={logoTexture}
+//             mapAnisotropy={16} //the place where error was coming edit map-anisotropy to mapAnisotropy
+//             depthTest={false}
+//             depthWrite={true}
+//           />
+//         )}
+//       </mesh>
+//     </group>
+//   );
+// };
+
+// export default Shirt;
+import React, { useRef, useEffect } from "react";
 import { easing } from "maath";
 import { useSnapshot } from "valtio";
 import { useFrame } from "@react-three/fiber";
@@ -9,18 +64,32 @@ import state from "../store";
 const Shirt = () => {
   const snap = useSnapshot(state);
   const { nodes, materials } = useGLTF("/shirt_baked.glb");
+
+  // Load textures
   const logoTexture = useTexture(snap.logoDecal);
   const fullTexture = useTexture(snap.fullDecal);
 
-  useFrame((state, delta) =>
-    easing.dampC(materials.lambert1.color, snap.color, 0.25, delta)
-  );
+  // Check if textures are loaded before rendering
+  if (!logoTexture || !fullTexture) {
+    return <span>Loading textures...</span>;
+  }
+
+  // Reference to the mesh for optimization
+  const meshRef = useRef();
+
+  // Smooth color transition using damping
+  useFrame((state, delta) => {
+    if (materials.lambert1) {
+      easing.dampC(materials.lambert1.color, snap.color, 0.25, delta);
+    }
+  });
 
   const stateString = JSON.stringify(snap);
 
   return (
     <group key={stateString}>
       <mesh
+        ref={meshRef}
         castShadow
         geometry={nodes.T_Shirt_male.geometry}
         material={materials.lambert1}
@@ -42,14 +111,26 @@ const Shirt = () => {
             rotation={[0, 0, 0]}
             scale={0.1}
             map={logoTexture}
-            mapAnisotropy={16} //the place where error was coming edit map-anisotropy to mapAnisotropy
+            mapAnisotropy={16}
             depthTest={false}
             depthWrite={true}
           />
         )}
+        {/* 
+        {snap.isLogoTexture && (
+          <Decal
+            position={[0, 0.1, 0.15]}
+            rotation={[0, 0, 0]}
+            scale={0.8}
+            map={logoTexture}
+            mapAnisotropy={16}
+            depthTest={false}
+            depthWrite={true}
+          />
+        )} */}
       </mesh>
     </group>
   );
 };
 
-export default Shirt;
+export default React.memo(Shirt); // Optimize re-renders
